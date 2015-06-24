@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, level
 
 width = 1024
 height = 768
@@ -47,11 +47,11 @@ class StartMenuItem(pygame.sprite.Sprite):
 		
 			
 	def clicked(self, buttontype):
-		global running
+		global running, width, height
 		if buttontype == 'quit':
 			running = 0
 		elif buttontype == 'start':
-			print 'success!'
+			level.main(width, height)
 class Character:
 	def __init__(self):
 		global height, width, screen
@@ -66,7 +66,6 @@ cloud3 = Cloud()
 title = StartMenuItem("Title.png", 212)
 start = StartMenuItem("start.png", 306)
 stopgame = StartMenuItem("quit.png", 363)
-print stopgame.rect
 
 pygame.display.set_caption('Psuedo-nomed')
 while running:
