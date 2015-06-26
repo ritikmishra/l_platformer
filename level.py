@@ -113,4 +113,4 @@ def main(width, height):
         pygame.display.flip()
     print("You lose!")
 if __name__ == '__main__':
-    print "This is not intended to be run on its own."
+    print "This file is meant to be a part of Psuedo-Nomed"

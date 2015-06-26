@@ -1,7 +1,7 @@
 import pygame, random, level
 
 width = 1024
-height = 768
+height = 576
 screen = pygame.display.set_mode((width, height))
 bgcolor = 135, 206, 235
 running = 1
