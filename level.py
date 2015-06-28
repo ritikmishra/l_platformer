@@ -19,14 +19,14 @@ def main(width, height):
             self.screen = screen
             self.img = pygame.image.load(img)
             self.size = self.img.get_size()
-            self.height = self.size[0]
-            self.width = self.size[1]
+            self.height = self.size[1]
+            self.width = self.size[0]
             self.posX=0
-            self.posY=650
+            self.posY=height - self.height
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            print self.rect
         def display(self):
             self.screen.blit(self.img, (self.posX, self.posY))
-            print self.rect
     class Character(pygame.sprite.Sprite):
         """Contains all the functions and variables that only the helicopter needs"""
         def __init__(self, screen, width, height):
@@ -51,16 +51,13 @@ def main(width, height):
    
         
         def move(self, ground_rect, direction='forward'):
-            if not self.rect.colliderect(ground_rect):
+            
+            if not pygame.sprite.collide_rect(self, ground_rect):
                 self.posY +=1
                 self.size = self.forward_size
                 self.img = self.forward_img
                 self.screen.blit(self.img, (self.posX, self.posY))
         
-            if direction == 'forward':
-                self.size = self.forward_size
-                self.img = self.forward_img
-                self.screen.blit(self.img, (self.posX, self.posY))
             elif direction == 'left':
                 self.size = self.left_size
                 self.img = self.left_img
@@ -93,18 +90,18 @@ def main(width, height):
                 running = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    gingerman.move(level.rect, 'left')
+                    gingerman.move(level, 'left')
                 if event.key == pygame.K_RIGHT:
-                    gingerman.move(level.rect, 'right')
+                    gingerman.move(level, 'right')
         #makes the background blue 
         window.fill((135, 206, 235))
         level.display()
         window.blit(level.img, (level.posX, level.posY))
-        gingerman.move(level.rect)
+        gingerman.move(level)
+        print pygame.sprite.collide_rect(gingerman, level)
         
-
       
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main(1204, 720)
+    main(1204, 576)
