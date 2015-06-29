@@ -62,16 +62,17 @@ def main(width, height):
             elif direction == 'left':
                 self.size = self.left_size
                 self.img = self.left_img
-                self.posX -= 1
+                self.posX -= 10
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
             elif direction == 'right':
                self.size = self.right_size
                self.img = self.right_img
-               self.posX += 1
+               self.posX += 10
                self.screen.blit(self.img, (self.posX, self.posY))
                self.rect = pygame.Rect((self.posX, self.posY), self.size)
-
+            else:
+				self.screen.blit(self.img, (self.posX, self.posY))
            
         
 
