@@ -28,8 +28,12 @@ def main(width, height):
             print self.rect
         def display(self):
             self.screen.blit(self.img, (self.posX, self.posY))
-        def scroll(self):
-            self.posX= 0-self.screen_width + 100
+            self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        def scroll(self, distance):
+			if distance > 0:
+				self.posX= 0-self.screen_width + distance
+			elif distance <0:
+				self.posX= self.screen_width + distance
     class Character(pygame.sprite.Sprite):
         """Contains all the functions and variables that only the helicopter needs"""
         def __init__(self, screen, width, height):
@@ -79,10 +83,17 @@ def main(width, height):
                 self.screen.blit(self.img, (self.posX, self.posY))
             
             if self.posX >= self.screen_width - 100:
-                self.posX = 100
-                ground_rect.scroll()
+                self.posX = 101
+                ground_rect.scroll(101)
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            elif self.posX <= 100:
+                self.posX = self.screen_width -101
+                ground_rect.scroll(-101)
+                self.screen.blit(self.img, (self.posX, self.posY))
+                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+
+
 
     #The user's helicopter
     level = Level(window, width, height, "Level 1.png")
