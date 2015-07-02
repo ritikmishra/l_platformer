@@ -13,6 +13,32 @@ def main(width, height):
         
     #helps with making the close button in the corner work
     running = 1
+    class PowerUp(pygame.sprite.Sprite):
+        def __init__(self, screen, width, height, img, version, posX = False, posY = False):
+            super(Level).__init__(Level)
+            self.version = version
+            self.screen = screen
+            self.img = pygame.image.load(img)
+            self.size = self.img.get_size()
+            self.height = self.size[1]
+            self.width = self.size[0]
+            self.screen_width = width
+            if not posX:
+                self.posX = width/2
+            else:
+                self.posX = posX
+            
+            if not posY:
+                self.posY = height-110
+            else:
+                self.posY = posY
+            self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            
+
+        def __str__(self):
+            return "Type: " +  str(self.version) + "\n Location: " +  str(self.rect)
+            
+            
     class Level(pygame.sprite.Sprite):
         def __init__(self, screen, width, height, img):
             super(Level).__init__(Level)
@@ -25,15 +51,15 @@ def main(width, height):
             self.posX=0
             self.posY=height - self.height
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
-            print self.rect
+            
         def display(self):
             self.screen.blit(self.img, (self.posX, self.posY))
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
         def scroll(self, distance):
-			if distance > 0:
-				self.posX= 0-self.screen_width + distance
-			elif distance <0:
-				self.posX= self.screen_width + distance
+            if distance > 0:
+                self.posX= 0-self.screen_width + distance
+            elif distance <0:
+                self.posX= self.screen_width + distance
     class Character(pygame.sprite.Sprite):
         """Contains all the functions and variables that only the helicopter needs"""
         def __init__(self, screen, width, height):
@@ -98,8 +124,8 @@ def main(width, height):
     #The user's helicopter
     level = Level(window, width, height, "Level 1.png")
     gingerman = Character(window, width, height)
-
-        
+    speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher')
+    print speedup    
         
     score = 0
     #gameloop
@@ -119,9 +145,6 @@ def main(width, height):
         level.display()
         window.blit(level.img, (level.posX, level.posY))
         gingerman.move(level)
-        print pygame.sprite.collide_rect(gingerman, level)
-        
-      
         pygame.display.flip()
 
 if __name__ == '__main__':
