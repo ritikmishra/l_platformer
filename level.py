@@ -18,8 +18,11 @@ def main(width, height):
             super(Level).__init__(Level)
             self.version = version
             self.screen = screen
-            self.img = pygame.image.load(img)
-            self.size = self.img.get_size()
+            self.preimg = pygame.image.load(img)
+
+            self.size = self.preimg.get_size()
+            self.img = pygame.transform.scale(self.preimg, ( int(self.size[0]/18), int(self.size[1]/18) ) )
+
             self.height = self.size[1]
             self.width = self.size[0]
             self.screen_width = width
@@ -33,6 +36,9 @@ def main(width, height):
             else:
                 self.posY = posY
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        
+        def display(self):    
+			self.screen.blit(self.img, (self.posX, self.posY))
             
 
         def __str__(self):
@@ -124,11 +130,12 @@ def main(width, height):
     #The user's helicopter
     level = Level(window, width, height, "Level 1.png")
     gingerman = Character(window, width, height)
-    speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher')
+    speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher', False, height - 125)
     print speedup    
         
     score = 0
     #gameloop
+    pygame.key.set_repeat(100, 50)
     while running:
         #makes the close button functional
         events = pygame.event.get()
@@ -143,7 +150,9 @@ def main(width, height):
         #makes the background blue 
         window.fill((135, 206, 235))
         level.display()
-        window.blit(level.img, (level.posX, level.posY))
+        speedup.display()
+        
+        
         gingerman.move(level)
         pygame.display.flip()
 
