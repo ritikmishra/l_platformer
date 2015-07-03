@@ -19,10 +19,11 @@ def main(width, height):
             self.version = version
             self.screen = screen
             self.preimg = pygame.image.load(img)
+            
 
             self.size = self.preimg.get_size()
             self.img = pygame.transform.scale(self.preimg, ( int(self.size[0]/18), int(self.size[1]/18) ) )
-
+            self.mask = pygame.mask.from_surface(self.img)
             self.height = self.size[1]
             self.width = self.size[0]
             self.screen_width = width
@@ -36,10 +37,13 @@ def main(width, height):
             else:
                 self.posY = posY
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            
         
         def display(self):    
-			self.screen.blit(self.img, (self.posX, self.posY))
-            
+            self.screen.blit(self.img, (self.posX, self.posY))
+        def speedup(self, character_obj):
+			if pygame.sprite.collide_rect(self, character_obj):
+				character_obj.posX += self.size[0]
 
         def __str__(self):
             return "Type: " +  str(self.version) + "\n Location: " +  str(self.rect)
@@ -50,22 +54,24 @@ def main(width, height):
             super(Level).__init__(Level)
             self.screen = screen
             self.img = pygame.image.load(img)
+            self.mask = pygame.mask.from_surface(self.img)
             self.size = self.img.get_size()
             self.height = self.size[1]
             self.width = self.size[0]
             self.screen_width = width
-            self.posX=0
+            self.posX=-731
             self.posY=height - self.height
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
-            
+            self.mask = pygame.mask.from_surface(self.img)
         def display(self):
             self.screen.blit(self.img, (self.posX, self.posY))
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
-        def scroll(self, distance):
-            if distance > 0:
-                self.posX= 0-self.screen_width + distance
-            elif distance <0:
-                self.posX= self.screen_width + distance
+        def scroll(self, direction,distance):
+            
+            if direction == 'right':
+                self.posX -= self.screen_width + distance
+            elif direction == 'left':
+                self.posX += self.screen_width - distance
     class Character(pygame.sprite.Sprite):
         """Contains all the functions and variables that only the helicopter needs"""
         def __init__(self, screen, width, height):
@@ -79,8 +85,13 @@ def main(width, height):
             self.right_size = self.right_img.get_size()
             self.left_size = self.left_img.get_size()
             
+            #self.forward_mask = pygame.mask.from_surface(self.forward_img)
+            #self.right_mask = pygame.mask.from_surface(self.right_img)
+            #self.left_mask = pygame.mask.from_surface(self.left_img)
+            
             self.size = self.forward_size
             self.img = self.forward_img
+            #self.mask = self.forward_mask
             
             self.screen = screen
             self.posY = height/2
@@ -96,41 +107,56 @@ def main(width, height):
                 self.posY +=1
                 self.size = self.forward_size
                 self.img = self.forward_img
+                #self.mask = self.forward_mask
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
         
             elif direction == 'left':
                 self.size = self.left_size
                 self.img = self.left_img
+                #self.mask = self.left_mask
                 self.posX -= 10
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
             elif direction == 'right':
                self.size = self.right_size
                self.img = self.right_img
+               #self.mask = self.right_mask
                self.posX += 10
                self.screen.blit(self.img, (self.posX, self.posY))
                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        
+            elif direction == 'up':
+                self.posY -=5
+                self.size = self.forward_size
+                self.img = self.forward_img
+                #self.mask = self.forward_mask
+                self.screen.blit(self.img, (self.posX, self.posY))
+                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        
+            
+            
+            
             else:
                 self.screen.blit(self.img, (self.posX, self.posY))
             
             if self.posX >= self.screen_width - 100:
                 self.posX = 101
-                ground_rect.scroll(101)
+                ground_rect.scroll('right', 101)
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
             elif self.posX <= 100:
                 self.posX = self.screen_width -101
-                ground_rect.scroll(-101)
+                ground_rect.scroll('left', 101)
                 self.screen.blit(self.img, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
 
 
     #The user's helicopter
-    level = Level(window, width, height, "Level 1.png")
+    level = Level(window, width, height, "Level 1a.png")
     gingerman = Character(window, width, height)
-    speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher', False, height - 125)
+    speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher', False, 125)
     print speedup    
         
     score = 0
@@ -147,12 +173,17 @@ def main(width, height):
                     gingerman.move(level, 'left')
                 if event.key == pygame.K_RIGHT:
                     gingerman.move(level, 'right')
+                if event.key == pygame.K_SPACE:
+                    gingerman.move(level, 'up')
+
         #makes the background blue 
         window.fill((135, 206, 235))
         level.display()
-        speedup.display()
+        #speedup.display()
         
+        print level.posX
         
+        #speedup.speedup(gingerman)
         gingerman.move(level)
         pygame.display.flip()
 

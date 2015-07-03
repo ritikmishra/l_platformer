@@ -51,7 +51,7 @@ class StartMenuItem(pygame.sprite.Sprite):
         if buttontype == 'quit':
             running = 0
         elif buttontype == 'start':
-			
+            
             level.main(width, height)
 class Character:
     def __init__(self):
