@@ -83,7 +83,7 @@ def main(width, height):
 				gingerman.posY = height/2
 			deaths -= 1
 				
-		#speedup.display() #|This is commented because the speedup is glitchy
+		speedup.display() #|This is commented because the speedup is glitchy
 		
 		#speedup.speedup(gingerman) # |This is commented because the speedup is glitchy
 		

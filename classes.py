@@ -65,12 +65,12 @@ class Level(pygame.sprite.Sprite):
 		"""Shows the ground"""
 		self.screen.blit(self.image, (self.posX, self.posY))
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
-	def scroll(self, direction,distance):
+	def scroll(self, direction):
 		"""If the player is far enough to either side, we want to move the ground so the player can see the new ground"""
 		if direction == 'right':
-			self.posX -= self.screen_width + distance
+			self.posX -= self.screen_width
 		elif direction == 'left':
-			self.posX += self.screen_width - distance
+			self.posX += self.screen_width
 			
 class Character(pygame.sprite.Sprite):
 	"""Contains all the functions and variables that only the player needs"""
@@ -151,14 +151,14 @@ class Character(pygame.sprite.Sprite):
 
 					
 				
-		if self.posX >= self.screen_width - 100:
-			self.posX = 101
-			ground_rect.scroll('right', 101)
+		if self.posX >= self.screen_width:
+			self.posX = 3
+			ground_rect.scroll('right')
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
-		elif self.posX <= 100:
-			self.posX = self.screen_width -101
-			ground_rect.scroll('left', 101)
+		elif self.posX <= 0:
+			self.posX = self.screen_width-3
+			ground_rect.scroll('left')
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
