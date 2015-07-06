@@ -1,4 +1,4 @@
-import pygame, random, level, sys
+import pygame, random, level, sys, time
 width = 1024
 height = 576
 screen = pygame.display.set_mode((width, height))
@@ -77,9 +77,9 @@ class Character(pygame.sprite.Sprite):
 	def __init__(self, screen, width, height):
 		super(Level).__init__(Level)
 		"""Creates all the essential variables. Also loads image, which is very important"""
-		self.forward_img = pygame.image.load("Ginger_forward.png")
-		self.right_img = pygame.image.load("Ginger_right.png")
-		self.left_img = pygame.image.load("Ginger_left.png")
+		self.forward_img = pygame.image.load("resources/Ginger_forward.png")
+		self.right_img = pygame.image.load("resources/Ginger_right.png")
+		self.left_img = pygame.image.load("resources/Ginger_left.png")
 		
 		self.forward_size = self.forward_img.get_size()
 		self.right_size = self.right_img.get_size()
@@ -126,13 +126,17 @@ class Character(pygame.sprite.Sprite):
 		   self.screen.blit(self.image, (self.posX, self.posY))
 		   self.rect = pygame.Rect((self.posX, self.posY), self.size)
 	
-		if direction == 'up':
-			self.posY -=5
+		if direction == 'up' and pygame.sprite.collide_mask(self, ground_rect):
 			self.size = self.forward_size
 			self.image = self.forward_img
 			#self.mask = self.forward_mask
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
+			for x in list(reversed(range(self.size[0]))):
+				self.posY -= x/4
+				print x/4
+			
+		
 		
 		if pygame.sprite.collide_rect(self, ground_rect):
 			if pygame.sprite.collide_mask(self, ground_rect):
@@ -163,7 +167,7 @@ class Cloud:
     """ 'And God said 'Let there be clouds!' ' """
     def __init__(self):
         global height, width, screen
-        self.img = pygame.image.load("8bit_cloud.png")
+        self.img = pygame.image.load("resources/8bit_cloud.png")
         self.size = self.img.get_size()
         self.screen = screen
         self.altitude = random.randint(0, (height/3)/self.size[1]) * self.size[1] 

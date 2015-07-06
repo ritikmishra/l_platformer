@@ -15,9 +15,9 @@ cloud1 = Cloud()
 cloud2 = Cloud()
 cloud3 = Cloud()
 
-title = StartMenuItem("Title.png", 212)
-start = StartMenuItem("start.png", 306)
-stopgame = StartMenuItem("quit.png", 363)
+title = StartMenuItem("resources/Title.png", 212)
+start = StartMenuItem("resources/start.png", 306)
+stopgame = StartMenuItem("resources/quit.png", 363)
 
 pygame.display.set_caption('Psuedo-nomed')
 while running:

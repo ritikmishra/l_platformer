@@ -9,7 +9,16 @@ def main(width, height):
 	from classes import Level
 	from classes import Character
 	from classes import Cloud
- 
+	
+	#Death counter
+	deaths = 0
+	
+	pygame.init()
+	font = pygame.font.SysFont("OSP-DIN", 48)
+	 
+	text = font.render("Score: MOOOO" , True ,(255,255,255))
+	
+	
 	#create the screen
 	dimensions = (width, height)
 	screen = pygame.display.set_mode(dimensions)
@@ -18,13 +27,14 @@ def main(width, height):
 	running = 1
 	
 	#The ground
-	level = Level(screen, width, height, "Level 1a.png")
+	level = Level(screen, width, height, "resources/Level 1.png")
+	
 	
 	#The character, who's sprite is a gingerbread man
 	gingerman = Character(screen, width, height)
 	
 	#The powerup
-	speedup = PowerUp(screen, width, height, 'arrow.png', 'Launcher', False, 125)
+	speedup = PowerUp(screen, width, height, 'resources/arrow.png', 'Launcher', False, 125)
 	
 	#If the arrow keys are held down, we want the character to continously move. This helps with that.	
 	pygame.key.set_repeat(100, 50)
@@ -61,9 +71,21 @@ def main(width, height):
 		#Shows the level
 		level.display()
 		
-		#speedup.display() |This is commented because the speedup is glitchy
+
+		deathtext = font.render("Score:"+ str(deaths), 1,(255,255,255))
 		
-		#speedup.speedup(gingerman) |This is commented because the speedup is glitchy
+		if gingerman.posY > height:
+			if gingerman.posX < width/2:
+				gingerman.posX = width-102
+				gingerman.posY = height/2
+			else:
+				gingerman.posX = 102
+				gingerman.posY = height/2
+			deaths -= 1
+				
+		#speedup.display() #|This is commented because the speedup is glitchy
+		
+		#speedup.speedup(gingerman) # |This is commented because the speedup is glitchy
 		
 		#Makes sure physics applies
 		gingerman.move(level)
@@ -71,6 +93,11 @@ def main(width, height):
 		#Shows and moves the cloud
 		for cloud in clouds:
 			cloud.move()
+		
+		
+		screen.blit(deathtext, (0,0))
+
+
 		
 		#Shows everything
 		pygame.display.flip()
