@@ -1,63 +1,14 @@
 import pygame, random, level
 
+from classes import Cloud 
+from classes import StartMenuItem
+
 width = 1024
 height = 576
 screen = pygame.display.set_mode((width, height))
 bgcolor = 135, 206, 235
 running = 1
 
-class Cloud:
-    """ 'And God said 'Let there be clouds!' ' """
-    def __init__(self):
-        global height, width, screen
-        self.img = pygame.image.load("8bit_cloud.png")
-        self.size = self.img.get_size()
-        self.screen = screen
-        self.altitude = random.randint(0, (height/3)/self.size[1]) * self.size[1] 
-        self.position = random.randint(0, width)
-        
-    def move(self):
-        self.position += 0.5
-        
-        self.screen.blit(self.img, (self.position,self.altitude))
-        if self.position == 480+self.size[0]:
-            self.altitude = random.randint(0, (height/2)/self.size[1]) * self.size[1] 
-            self.position = 0-self.size[0]
-            
-class StartMenuItem(pygame.sprite.Sprite):
-    """ God: 'Dammit how do I start this man-damn game?'
-        Jeffery: 'Just click that little sprite part of the StartMenuItem Class' """
-    def __init__(self, img_location, posY, centered=True, posX=None):
-        global height, width, screen
-        super(StartMenuItem).__init__(StartMenuItem)
-        self.img = pygame.image.load(str(img_location))
-        
-
-        self.size = self.img.get_size()
-        self.screen = screen
-        self.altitude = int(posY)
-        if centered:
-            self.posX = (width / 2) - (self.size[0] / 2)
-        else:
-            self.posX = posX
-            
-        self.rect = pygame.Rect((self.posX, self.altitude), self.size)
-    def display(self, buttontype='Text'):
-        self.screen.blit(self.img, (self.posX, self.altitude))
-        
-            
-    def clicked(self, buttontype):
-        global running, width, height
-        if buttontype == 'quit':
-            running = 0
-        elif buttontype == 'start':
-            
-            level.main(width, height)
-class Character:
-    def __init__(self):
-        global height, width, screen
-        self.posX = width/2
-        self.posY = height/2
         
         
 cloud1 = Cloud()
