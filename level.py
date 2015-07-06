@@ -63,7 +63,7 @@ def main(width, height):
 			self.posY=height - self.height
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 			self.mask = pygame.mask.from_surface(self.image)
-			print self.mask.get_size()
+			
 		def display(self):
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
@@ -165,7 +165,7 @@ def main(width, height):
 	level = Level(window, width, height, "Level 1a.png")
 	gingerman = Character(window, width, height)
 	speedup = PowerUp(window, width, height, 'arrow.png', 'Launcher', False, 125)
-	print speedup	
+	
 		
 	score = 0
 	#gameloop
@@ -189,7 +189,7 @@ def main(width, height):
 		level.display()
 		#speedup.display()
 		
-		print level.posX
+	
 		
 		#speedup.speedup(gingerman)
 		gingerman.move(level)
