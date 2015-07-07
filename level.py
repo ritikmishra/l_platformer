@@ -9,6 +9,7 @@ def main(width, height):
 	from classes import Level
 	from classes import Character
 	from classes import Cloud
+	from classes import Coin
 	
 	#Death counter
 	deaths = 0
@@ -16,7 +17,7 @@ def main(width, height):
 	pygame.init()
 	font = pygame.font.SysFont("OSP-DIN", 48)
 	 
-	text = font.render("Score: MOOOO" , True ,(255,255,255))
+	text = font.render("Score: Nil" , True ,(255,255,255))
 	
 	
 	#create the screen
@@ -42,6 +43,7 @@ def main(width, height):
 	
 	#The clouds. We put them into a list so we can iterate through them
 	clouds = [Cloud(), Cloud(), Cloud()]
+	coins = [Coin(screen, width, height, )]
 	
 	#Gameloop, executes all the actions
 	while running:
@@ -64,26 +66,24 @@ def main(width, height):
 					gingerman.move(level, 'right')
 				if event.key == pygame.K_SPACE:
 					gingerman.move(level, 'up')
-
+			
+	
+		
+	
 		#makes the background blue 
 		screen.fill((135, 206, 235))
 		
 		#Shows the level
 		level.display()
 		
+		for coin in coins:
+			coin.display(gingerman)
 
-		deathtext = font.render("Score:"+ str(deaths), 1,(255,255,255))
+		deathtext = font.render("Score:"+ str(gingerman.deaths), 1,(255,255,255))
 		
-		if gingerman.posY > height:
-			if gingerman.posX < width/2:
-				gingerman.posX = width-102
-				gingerman.posY = height/2
-			else:
-				gingerman.posX = 102
-				gingerman.posY = height/2
-			deaths -= 1
+		
 				
-		speedup.display() #|This is commented because the speedup is glitchy
+		#speedup.display() #|This is commented because the speedup is glitchy
 		
 		#speedup.speedup(gingerman) # |This is commented because the speedup is glitchy
 		

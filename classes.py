@@ -3,6 +3,42 @@ width = 1024
 height = 576
 screen = pygame.display.set_mode((width, height))
 
+class Coin(pygame.sprite.Sprite):
+	"""We'll want a way to increase score or there's no point in telling the score"""
+	
+	def __init__(self, screen, width, height, posX = False, posY = False):
+		"""Initializes essential variables, loads image, places image, etc..."""
+		self.picked = False
+	
+		super(Level).__init__(Level)
+		self.screen = screen
+		self.img = pygame.image.load('resources/Coin.png')
+		
+		self.size = self.img.get_size()
+		self.mask = pygame.mask.from_surface(self.img)
+		self.height = self.size[1]
+		self.width = self.size[0]
+		self.screen_width = width
+		
+		if not posX:
+			self.posX = width/2
+		else:
+			self.posX = posX
+		
+		if not posY:
+			self.posY = height-110
+		else:
+			self.posY = posY
+		self.rect = pygame.Rect((self.posX, self.posY), self.size)
+	def display(self, character_obj):
+		"""I'm sure that the coin needs to be seen and located before it is obtained"""
+		if self.picked == False:
+			self.screen.blit(self.img, (self.posX, self.posY))
+		
+		if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
+			self.picked = True
+			character_obj.deaths += 1
+			
 class PowerUp(pygame.sprite.Sprite):
 	"""We'll want powerups, or the game will be less fun"""
 	
@@ -12,11 +48,10 @@ class PowerUp(pygame.sprite.Sprite):
 		super(Level).__init__(Level)
 		self.version = version
 		self.screen = screen
-		self.preimg = pygame.image.load(image)
+		self.img = pygame.image.load(image)
 		
-		self.size = self.preimg.get_size()
-		self.image = pygame.transform.scale(self.preimg, ( int(self.size[0]/18), int(self.size[1]/18) ) )
-		self.mask = pygame.mask.from_surface(self.image)
+		self.size = self.img.get_size()
+		self.mask = pygame.mask.from_surface(self.img)
 		self.height = self.size[1]
 		self.width = self.size[0]
 		self.screen_width = width
@@ -30,11 +65,12 @@ class PowerUp(pygame.sprite.Sprite):
 		else:
 			self.posY = posY
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
+		
 	
 		
 	def display(self):	
 		"""Shows image"""
-		self.screen.blit(self.image, (self.posX, self.posY))
+		self.screen.blit(self.img, (self.posX, self.posY))
 	def speedup(self, character_obj):
 		"""Applies powerup. In this case, a speedup."""
 		if pygame.sprite.collide_rect(self, character_obj):
@@ -60,7 +96,8 @@ class Level(pygame.sprite.Sprite):
 		self.posY=height - self.height
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		self.mask = pygame.mask.from_surface(self.image)
-			
+		
+					
 	def display(self):
 		"""Shows the ground"""
 		self.screen.blit(self.image, (self.posX, self.posY))
@@ -97,8 +134,10 @@ class Character(pygame.sprite.Sprite):
 		self.posY = height/2
 		self.posX = width/2
 		self.screen_width = width
+		self.screen_height = height
 	
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
+		self.deaths = 0
   
 		
 	def move(self, ground_rect, direction='forward'):
@@ -134,7 +173,7 @@ class Character(pygame.sprite.Sprite):
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 			for x in list(reversed(range(self.size[0]))):
 				self.posY -= x/4
-				print x/4
+
 			
 		
 		
@@ -150,7 +189,17 @@ class Character(pygame.sprite.Sprite):
 				self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
 					
-				
+		if self.posY > self.screen_height:
+			if self.posX < self.screen_width/2:
+				self.posX = self.screen_width-102
+				self.posY = self.screen_height/2
+			else:
+				self.posX = 102
+				self.posY = self.screen_height/2
+			self.deaths -= 1		
+		
+		
+		
 		if self.posX >= self.screen_width:
 			self.posX = 3
 			ground_rect.scroll('right')
