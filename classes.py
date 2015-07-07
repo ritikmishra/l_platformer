@@ -3,6 +3,8 @@ width = 1024
 height = 576
 screen = pygame.display.set_mode((width, height))
 
+
+
 class Coin(pygame.sprite.Sprite):
 	"""We'll want a way to increase score or there's no point in telling the score"""
 	
@@ -39,14 +41,22 @@ class Coin(pygame.sprite.Sprite):
 			self.picked = True
 			character_obj.deaths += 1
 			
+	def scroll(self, direction):
+		"""If the player has triggerred a scroll, we want the coin to move offscreen."""
+		if direction == 'right':
+			self.posX -= self.screen_width
+		elif direction == 'left':
+			self.posX += self.screen_width		
+
+
 class PowerUp(pygame.sprite.Sprite):
 	"""We'll want powerups, or the game will be less fun"""
 	
-	def __init__(self, screen, width, height, image, version, posX = False, posY = False):
+	def __init__(self, screen, width, height, image, posX = False, posY = False):
 		"""Initializes essential variables, loads image, places image, etc..."""
+		self.picked = False
 	
 		super(Level).__init__(Level)
-		self.version = version
 		self.screen = screen
 		self.img = pygame.image.load(image)
 		
@@ -55,6 +65,7 @@ class PowerUp(pygame.sprite.Sprite):
 		self.height = self.size[1]
 		self.width = self.size[0]
 		self.screen_width = width
+		
 		if not posX:
 			self.posX = width/2
 		else:
@@ -65,21 +76,21 @@ class PowerUp(pygame.sprite.Sprite):
 		else:
 			self.posY = posY
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
+	def display(self, character_obj):
+		"""I'm sure that the coin needs to be seen and located before it is obtained"""
+		if self.picked == False:
+			self.screen.blit(self.img, (self.posX, self.posY))
 		
-	
-		
-	def display(self):	
-		"""Shows image"""
-		self.screen.blit(self.img, (self.posX, self.posY))
-	def speedup(self, character_obj):
-		"""Applies powerup. In this case, a speedup."""
-		if pygame.sprite.collide_rect(self, character_obj):
-			character_obj.posX += self.size[0]
-	def __str__(self):
-		"""If we want to print the function, the print statement will output important info"""
-		return "Type: " +  str(self.version) + "\n Location: " +  str(self.rect)
+		if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
+			self.picked = True
+			character_obj.speed *= 3
 			
-			
+	def scroll(self, direction):
+		"""If the player has triggerred a scroll, we want the coin to move offscreen."""
+		if direction == 'right':
+			self.posX -= self.screen_width
+		elif direction == 'left':
+			self.posX += self.screen_width		
 class Level(pygame.sprite.Sprite):
 	"""The ground"""
 	def __init__(self, screen, width, height, image):
@@ -138,9 +149,10 @@ class Character(pygame.sprite.Sprite):
 	
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		self.deaths = 0
+		self.speed = 10
   
 		
-	def move(self, ground_rect, direction='forward'):
+	def move(self, ground_rect, direction='forward', coin_obj=[], powerup_obj=[]):
 		"""We want to be able to move """
 		if not pygame.sprite.collide_rect(self, ground_rect):
 			if not pygame.sprite.collide_mask(self, ground_rect):
@@ -154,14 +166,14 @@ class Character(pygame.sprite.Sprite):
 			self.size = self.left_size
 			self.image = self.left_img
 			#self.mask = self.left_mask
-			self.posX -= 10
+			self.posX -= self.speed
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		if direction == 'right':
 		   self.size = self.right_size
 		   self.image = self.right_img
 		   #self.mask = self.right_mask
-		   self.posX += 10
+		   self.posX += self.speed
 		   self.screen.blit(self.image, (self.posX, self.posY))
 		   self.rect = pygame.Rect((self.posX, self.posY), self.size)
 	
@@ -203,11 +215,20 @@ class Character(pygame.sprite.Sprite):
 		if self.posX >= self.screen_width:
 			self.posX = 3
 			ground_rect.scroll('right')
+			for obj in coin_obj:
+				obj.scroll('right')
+			for obj in powerup_obj:
+				obj.scroll('right')
+		
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		elif self.posX <= 0:
 			self.posX = self.screen_width-3
 			ground_rect.scroll('left')
+			for obj in coin_obj:
+				obj.scroll('left')
+			for obj in powerup_obj:
+				obj.scroll('left')
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
