@@ -82,14 +82,14 @@ def main(width, height):
 		level.display()
 		
 		for coin in coins:
-			coin.display(gingerman)
+			coin.display(gingerman, level)
 		for thing in powerups:
-			thing.display(gingerman)
+			thing.display(gingerman, level)
 
 
 		deathtext = font.render("Score:"+ str(gingerman.deaths), 1,(255,255,255))
 		rocktext = font.render("Rocks:"+ str(gingerman.rocks), 1,(255,255,255))
-		rocks.display(gingerman)
+		rocks.display(gingerman, level)
 		
 				
 		#Makes sure physics applies

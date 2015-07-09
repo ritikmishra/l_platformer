@@ -37,7 +37,7 @@ class Obtainium(pygame.sprite.Sprite):
 		else:
 			self.posY = posY
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
-	def display(self, character_obj):
+	def display(self, character_obj, level):
 		"""I'm sure that the coin needs to be seen and located before it is obtained"""
 		if self.picked == False:
 			self.screen.blit(self.img, (self.posX, self.posY))
@@ -51,6 +51,13 @@ class Obtainium(pygame.sprite.Sprite):
 				else:
 					self.picked = True
 					character_obj.deaths += self.change
+		
+		if not pygame.sprite.collide_rect(self, level):
+			if not pygame.sprite.collide_mask(self, level):
+				self.posY +=2
+				self.screen.blit(self.img, (self.posX, self.posY))
+				self.rect = pygame.Rect((self.posX, self.posY), self.size)
+		
 					
 	def scroll(self, direction):
 		"""If the player has triggerred a scroll, we want the coin to move offscreen."""
@@ -89,7 +96,7 @@ class PowerUp(pygame.sprite.Sprite):
 		else:
 			self.posY = posY
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
-	def display(self, character_obj):
+	def display(self, character_obj, level):
 		"""I'm sure that the coin needs to be seen and located before it is obtained"""
 		if self.picked == False:
 			self.screen.blit(self.img, (self.posX, self.posY))
@@ -103,6 +110,13 @@ class PowerUp(pygame.sprite.Sprite):
 			else:
 				pass
 			pygame.key.set_repeat(100, character_obj.speed)
+		
+		if not pygame.sprite.collide_rect(self, level):
+			if not pygame.sprite.collide_mask(self, level):
+				self.posY +=2
+				self.screen.blit(self.img, (self.posX, self.posY))
+				self.rect = pygame.Rect((self.posX, self.posY), self.size)
+		
 			
 	def scroll(self, direction):
 		"""If the player has triggerred a scroll, we want the powerup to move offscreen."""
