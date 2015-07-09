@@ -9,15 +9,14 @@ def main(width, height):
 	from classes import Level
 	from classes import Character
 	from classes import Cloud
-	from classes import Coin
+	from classes import Obtainium
 	
 	#Death counter
 	deaths = 0
-	
+	clock = pygame.time.Clock()
 	pygame.init()
 	font = pygame.font.SysFont("OSP-DIN", 48)
 	 
-	text = font.render("Score: Nil" , True ,(255,255,255))
 	
 	
 	#create the screen
@@ -34,14 +33,22 @@ def main(width, height):
 	#The character, who's sprite is a gingerbread man
 	gingerman = Character(screen, width, height)
 	
-	#If the arrow keys are held down, we want the character to continously move. This helps with that.	
-	pygame.key.set_repeat(100, 50)
 	
 	
+	coin_imgs = ["resources/Coin2.png", "resources/Coin.png"]
 	#The clouds. We put them into a list so we can iterate through them
 	clouds = [Cloud(), Cloud(), Cloud()]
-	coins = [Coin(screen, width, height, (width/2) - 30, height-200), Coin(screen, width, height, (width/2) - 60, height-200), Coin(screen, width, height, (width/2) - 90, height-200), Coin(screen, width, height, (width/2) + 50, height-200), ]
-	powerups = [PowerUp(screen, width, height, 'resources/arrow.png', 300, 300)]
+	coins = []
+	powerups = []
+	rocks = Obtainium(screen, width, height, 'resources/stone.png', width/2, 50, True)
+	for x in range(7):
+		coins.append(Obtainium(screen, width, height, random.choice(coin_imgs), (random.randint(-400, 4000)) - (10*x) + width, height-150))
+		powerups.append(PowerUp(screen, width, height, 'resources/arrow.png', (random.randint(-400, 4000)) - (10*x) + width, height-150))
+		
+	#If the arrow keys are held down, we want the character to continously move. This helps with that.	
+	pygame.key.set_repeat(100, gingerman.speed)
+
+
 
 	#Gameloop, executes all the actions
 	while running:
@@ -59,11 +66,11 @@ def main(width, height):
 			#Moves the character if the keys are pressed
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_LEFT:
-					gingerman.move(level, 'left', coins)
+					gingerman.move(level, 'left', coins, powerups)
 				if event.key == pygame.K_RIGHT:
-					gingerman.move(level, 'right', coins)
+					gingerman.move(level, 'right', coins, powerups)
 				if event.key == pygame.K_SPACE:
-					gingerman.move(level, 'up', coins)
+					gingerman.move(level, 'up', coins, powerups)
 			
 	
 		
@@ -80,15 +87,11 @@ def main(width, height):
 			thing.display(gingerman)
 
 
-
 		deathtext = font.render("Score:"+ str(gingerman.deaths), 1,(255,255,255))
-		
+		rocktext = font.render("Rocks:"+ str(gingerman.rocks), 1,(255,255,255))
+		rocks.display(gingerman)
 		
 				
-		#speedup.display() #|This is commented because the speedup is glitchy
-		
-		#speedup.speedup(gingerman) # |This is commented because the speedup is glitchy
-		
 		#Makes sure physics applies
 		gingerman.move(level, 'forward', coins)
 		#Shows and moves the cloud
@@ -97,11 +100,16 @@ def main(width, height):
 		
 		
 		screen.blit(deathtext, (0,0))
+		screen.blit(rocktext, (0,48))
 
 
 		
 		#Shows everything
 		pygame.display.flip()
+		
+		clock.tick(120)
+		
+
 
 if __name__ == '__main__':
 	main(1024, 576)

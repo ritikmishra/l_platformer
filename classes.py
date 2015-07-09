@@ -2,25 +2,30 @@ import pygame, random, level, sys, time
 width = 1024
 height = 576
 screen = pygame.display.set_mode((width, height))
+pygame.mixer.init ()
 
 
-
-class Coin(pygame.sprite.Sprite):
+class Obtainium(pygame.sprite.Sprite):
 	"""We'll want a way to increase score or there's no point in telling the score"""
 	
-	def __init__(self, screen, width, height, posX = False, posY = False):
+	def __init__(self, screen, width, height, img, posX = False, posY = False, rock=False):
 		"""Initializes essential variables, loads image, places image, etc..."""
 		self.picked = False
 	
 		super(Level).__init__(Level)
 		self.screen = screen
-		self.img = pygame.image.load('resources/Coin.png')
-		
+		self.img = pygame.image.load(img)
+		self.change = 0
 		self.size = self.img.get_size()
 		self.mask = pygame.mask.from_surface(self.img)
 		self.height = self.size[1]
 		self.width = self.size[0]
 		self.screen_width = width
+		self.rock = rock
+		if self.width == 23:
+			self.change = 1
+		elif self.width == 64:
+			self.change = 2
 		
 		if not posX:
 			self.posX = width/2
@@ -36,17 +41,25 @@ class Coin(pygame.sprite.Sprite):
 		"""I'm sure that the coin needs to be seen and located before it is obtained"""
 		if self.picked == False:
 			self.screen.blit(self.img, (self.posX, self.posY))
+			
 		
 		if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
-			self.picked = True
-			character_obj.deaths += 1
-			
+			if pygame.sprite.collide_mask(self, character_obj):
+				if self.rock:
+					self.picked = True
+					character_obj.rocks += 1
+				else:
+					self.picked = True
+					character_obj.deaths += self.change
+					
 	def scroll(self, direction):
 		"""If the player has triggerred a scroll, we want the coin to move offscreen."""
 		if direction == 'right':
 			self.posX -= self.screen_width
+			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		elif direction == 'left':
 			self.posX += self.screen_width		
+			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
 
 class PowerUp(pygame.sprite.Sprite):
@@ -83,14 +96,22 @@ class PowerUp(pygame.sprite.Sprite):
 		
 		if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
 			self.picked = True
-			character_obj.speed *= 3
+			if character_obj.speed > 8:
+				character_obj.speed -= 8
+			elif character_obj.speed > 0:
+				character_obj.speed -= character_obj.speed-1
+			else:
+				pass
+			pygame.key.set_repeat(100, character_obj.speed)
 			
 	def scroll(self, direction):
-		"""If the player has triggerred a scroll, we want the coin to move offscreen."""
+		"""If the player has triggerred a scroll, we want the powerup to move offscreen."""
 		if direction == 'right':
 			self.posX -= self.screen_width
+			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		elif direction == 'left':
 			self.posX += self.screen_width		
+			self.rect = pygame.Rect((self.posX, self.posY), self.size)	
 class Level(pygame.sprite.Sprite):
 	"""The ground"""
 	def __init__(self, screen, width, height, image):
@@ -103,7 +124,7 @@ class Level(pygame.sprite.Sprite):
 		self.height = self.size[1]
 		self.width = self.size[0]
 		self.screen_width = width
-		self.posX=-731
+		self.posX=(-576)*2
 		self.posY=height - self.height
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		self.mask = pygame.mask.from_surface(self.image)
@@ -136,7 +157,8 @@ class Character(pygame.sprite.Sprite):
 		#self.forward_mask = pygame.mask.from_surface(self.forward_img)
 		#self.right_mask = pygame.mask.from_surface(self.right_img)
 		#self.left_mask = pygame.mask.from_surface(self.left_img)
-		
+		self.health = 3
+		self.rocks = 0
 		self.size = self.forward_size
 		self.image = self.forward_img
 		#self.mask = self.forward_mask
@@ -146,19 +168,18 @@ class Character(pygame.sprite.Sprite):
 		self.posX = width/2
 		self.screen_width = width
 		self.screen_height = height
+		self.error_sound = pygame.mixer.Sound("resources/error.mp3")
 	
 		self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		self.deaths = 0
-		self.speed = 10
+		self.speed = 50
   
 		
 	def move(self, ground_rect, direction='forward', coin_obj=[], powerup_obj=[]):
 		"""We want to be able to move """
 		if not pygame.sprite.collide_rect(self, ground_rect):
 			if not pygame.sprite.collide_mask(self, ground_rect):
-				self.posY +=1
-				self.size = self.forward_size
-				self.image = self.forward_img
+				self.posY +=2
 				#self.mask = self.forward_mask
 				self.screen.blit(self.image, (self.posX, self.posY))
 				self.rect = pygame.Rect((self.posX, self.posY), self.size)
@@ -166,20 +187,20 @@ class Character(pygame.sprite.Sprite):
 			self.size = self.left_size
 			self.image = self.left_img
 			#self.mask = self.left_mask
-			self.posX -= self.speed
+			self.posX -= 4
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
 		if direction == 'right':
 		   self.size = self.right_size
 		   self.image = self.right_img
 		   #self.mask = self.right_mask
-		   self.posX += self.speed
+		   self.posX += 4
 		   self.screen.blit(self.image, (self.posX, self.posY))
 		   self.rect = pygame.Rect((self.posX, self.posY), self.size)
 	
 		if direction == 'up' and pygame.sprite.collide_mask(self, ground_rect):
-			self.size = self.forward_size
-			self.image = self.forward_img
+			#self.size = self.forward_size
+			#self.image = self.forward_img
 			#self.mask = self.forward_mask
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
@@ -231,6 +252,12 @@ class Character(pygame.sprite.Sprite):
 				obj.scroll('left')
 			self.screen.blit(self.image, (self.posX, self.posY))
 			self.rect = pygame.Rect((self.posX, self.posY), self.size)
+		def shoot(self, rock):
+			if self.rocks > 0:
+				rock.shoot()
+			else:
+				self.error_sound.play()
+				
 
 
 class Cloud:
