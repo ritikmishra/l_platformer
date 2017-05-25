@@ -1,5 +1,6 @@
-import pygame, random, level
-
+import pygame
+import sys
+import level
 from classes import Cloud 
 from classes import StartMenuItem
 
@@ -26,11 +27,12 @@ while running:
     if event.type == pygame.QUIT:
         running = 0
     
-    if  pygame.mouse.get_pressed()[0] and start.rect.collidepoint(mouse_pos):
-        start.clicked('start')
+    if pygame.mouse.get_pressed()[0] and start.rect.collidepoint(mouse_pos):
+        stopgame.clicked(level.main, width, height)
         
     elif pygame.mouse.get_pressed()[0] and stopgame.rect.collidepoint(mouse_pos):
-        stopgame.clicked('quit')
+        start.clicked(sys.exit)
+
 
     screen.fill(bgcolor)
     cloud1.move()
