@@ -460,7 +460,6 @@ class Cloud:
             self.position = 0 - self.size[0]
 
 
-
 class StartMenuItem(pygame.sprite.Sprite):
     def __init__(self, img_path, posY, centered=True, posX=None):
         """

@@ -1,3 +1,4 @@
 .idea/
-*.pyc
+.pyc
 __pycache__/
+resources/*.png
