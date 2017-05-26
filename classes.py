@@ -217,16 +217,16 @@ class Projectile(pygame.sprite.Sprite):
         self.level = level_instance
 
     @staticmethod
-    def __get_vertical_speed(millis):
+    def __get_vertical_speed(vinit, millis):
         """
         :param millis: Milliseconds since we started flying 
         :return: The vertical speed in pixels/millisecond
         """
-        return G * millis / 1000
+        return vinit + (G * millis / 1000)
 
     def fly(self):
         dt = pygame.time.get_ticks() - self.initial_time
-        dy = self.__get_vertical_speed(dt)
+        dy = self.__get_vertical_speed(4, dt)
         self.posY += dy
         if self.speed > 0:
             self.posX += self.speed
@@ -287,9 +287,25 @@ class Character(pygame.sprite.Sprite):
         self.error_sound = pygame.mixer.Sound("resources/error.mp3")
         self.direction = None
 
+        self.initial_time = 0
+
         self.rect = pygame.Rect((self.posX, self.posY), self.size)
         self.deaths = 0
         self.speed = 50
+
+        self.initial_time = None
+        self.jumping = False
+        self.landed = True
+        self.dy = 0
+        self.initvel = 0
+
+    @staticmethod
+    def __get_vertical_speed(vinit, millis):
+        """
+        :param millis: Milliseconds since we started flying 
+        :return: The vertical speed in pixels/millisecond
+        """
+        return ((G * millis) / 1000) - vinit
 
     def __horizontalMoveLeft(self):
         """
@@ -308,10 +324,30 @@ class Character(pygame.sprite.Sprite):
         # self.mask = self.right_mask
         self.posX += 4
 
-    def __jump(self):
+    def __vertical_movement(self, ground_rect):
+        initvel = self.initvel
         """Jump. Does not blit or update rectangle."""
-        for x in list(reversed(range(self.size[0]))):
-            self.posY -= x / 4
+        if self.landed:
+            self.initial_time = pygame.time.get_ticks()
+            self.landed = False
+
+        dt = pygame.time.get_ticks() - self.initial_time
+        dy = self.__get_vertical_speed(initvel, dt)
+        self.posY += dy
+
+        print("dt: " + str(dt))
+        print("dy: " + str(dy))
+        print("Initial Velocity: " + str(initvel))
+        print("Jumping: " + str(self.jumping))
+        print("Landed: " + str(self.landed))
+        print("\n")
+
+        if pygame.sprite.collide_rect(self, ground_rect):
+            if pygame.sprite.collide_mask(self, ground_rect):
+                self.jumping = False
+                self.landed = True
+                self.initial_time = None
+
 
     def __display(self):
         """Blit and update the rectangle."""
@@ -326,17 +362,22 @@ class Character(pygame.sprite.Sprite):
         :param coin_obj: A list of coin objects. We need this list so we can shove them to the side of the screen when 
         we move too far.
         :param rock_obj: A list of rock object so that we can scroll them.
-        :param powerup_obj: A list of powerup objects. We need this for the same reason as the coin objects.
+        :param powerup_obj: A list of powerup objects so that we can scroll them.
         """
 
         self.direction = direction
 
-        if not pygame.sprite.collide_rect(self, ground_rect):
-            if not pygame.sprite.collide_mask(self, ground_rect):
-                self.posY += 2
-                # self.mask = self.forward_mask
-                self.screen.blit(self.image, (self.posX, self.posY))
-                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        mask = pygame.mask.from_surface(self.image)
+        overlap = mask.overlap_area(ground_rect.mask, (-int(self.posX) + ground_rect.posX, -int(self.posY) + ground_rect.posY))
+        print("Overlap: " + str(overlap))  # place mask at regular origin
+
+        if pygame.sprite.collide_mask(self, ground_rect):
+            self.landed = True
+            self.posY -= 0.5
+            if self.landed and overlap >= 22:
+                self.initvel = 0
+
+        self.__vertical_movement(ground_rect)
 
         if direction == 'left':
             self.__horizontalMoveLeft()
@@ -345,18 +386,8 @@ class Character(pygame.sprite.Sprite):
             self.__horizontalMoveRight()
 
         if direction == 'up' and pygame.sprite.collide_mask(self, ground_rect):
-            self.__jump()
-
-        # If we touched the ground:
-        if pygame.sprite.collide_rect(self, ground_rect):
-            if pygame.sprite.collide_mask(self, ground_rect):
-                self.screen.blit(self.image, (self.posX, self.posY))
-                self.rect = pygame.Rect((self.posX, self.posY), self.size)
-                self.posY -= 1
-            else:
-                self.posY += 1
-                self.size = self.forward_size
-                self.image = self.forward_img
+            self.initvel = 25
+            # move up
 
         # If we fell off the map
         if self.posY > self.screen_height:
@@ -384,7 +415,7 @@ class Character(pygame.sprite.Sprite):
         self.__display()
 
     def shoot(self, ground_rect, direction):
-        speed = 50
+        speed = 25
         if self.rocks > 0:
             self.rocks -= 1
             if direction == 'left':
@@ -396,6 +427,12 @@ class Character(pygame.sprite.Sprite):
         else:
             self.error_sound.play()
             return None
+
+    def __str__(self):
+        posx = "PosX: " + str(self.posX)
+        posy = "PosY: " + str(self.posY)
+        return posx + "\n" + posy
+
 
 
 class Cloud:
@@ -421,6 +458,7 @@ class Cloud:
         if self.position == global_width + self.size[0]:
             self.altitude = random.randint(0, (global_height / 2) / self.size[1]) * self.size[1]
             self.position = 0 - self.size[0]
+
 
 
 class StartMenuItem(pygame.sprite.Sprite):

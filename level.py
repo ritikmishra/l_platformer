@@ -95,10 +95,10 @@ def main(width, height):
 
         for bullet in bullets:
             bullet.fly()
-            print(bullet)
 
         # Makes sure physics applies
         gingerman.move(level, 'forward', coins)
+        # print(gingerman)
         # Shows and moves the cloud
         for cloud in clouds:
             cloud.move()
@@ -109,7 +109,7 @@ def main(width, height):
         # Shows everything
         pygame.display.flip()
 
-        clock.tick(60)
+        # clock.tick(60)
 
 
 if __name__ == '__main__':
