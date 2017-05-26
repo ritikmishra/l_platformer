@@ -1,20 +1,27 @@
 import pygame
 import random
-import level
-import sys
-import time
 
-width = 1024
-height = 576
-screen = pygame.display.set_mode((width, height))
+global_width = 1024
+global_height = 576
+global_screen = pygame.display.set_mode((global_width, global_height))
 pygame.mixer.init()
 
+G = 147
 
-class Obtainium(pygame.sprite.Sprite):
+
+class ItemOnGround(pygame.sprite.Sprite):
     """We'll want a way to increase score or there's no point in telling the score"""
 
-    def __init__(self, screen, width, height, img, posX=False, posY=False, rock=False):
-        """Initializes essential variables, loads image, places image, etc..."""
+    def __init__(self, screen, width, height, img, posX=global_width / 2, posY=50, rock=False):
+        """
+        :param screen: Instance of the screen 
+        :param width: Width of the scren
+        :param height: Height of the screen
+        :param img: Path to coin image
+        :param posX: X position of coin
+        :param posY: Y position of coin
+        :param rock: If i am a rock instead of a coin
+        """
         self.picked = False
 
         super(Level).__init__(Level)
@@ -44,9 +51,10 @@ class Obtainium(pygame.sprite.Sprite):
         self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
     def display(self, character_obj, level):
-        """I'm sure that the coin needs to be seen and located before it is obtained"""
-        if self.picked == False:
-            self.screen.blit(self.img, (self.posX, self.posY))
+        """
+        :param character_obj: The instance of the character so we can tell if we're picked up by it 
+        :param level: The instance of the level so that we can make sure we are staying above groind
+        """
 
         if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
             if pygame.sprite.collide_mask(self, character_obj):
@@ -60,17 +68,33 @@ class Obtainium(pygame.sprite.Sprite):
         if not pygame.sprite.collide_rect(self, level):
             if not pygame.sprite.collide_mask(self, level):
                 self.posY += 2
-                self.screen.blit(self.img, (self.posX, self.posY))
-                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        elif pygame.sprite.collide_rect(self, level):
+            if pygame.sprite.collide_mask(self, level):
+                self.posY -= 2
+
+        if not self.picked:
+            self.screen.blit(self.img, (self.posX, self.posY))
+            self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
     def scroll(self, direction):
-        """If the player has triggerred a scroll, we want the coin to move offscreen."""
+        """
+        :param direction: Move the coin offscreen if the player scrolled the screen
+        """
         if direction == 'right':
             self.posX -= self.screen_width
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
         elif direction == 'left':
             self.posX += self.screen_width
             self.rect = pygame.Rect((self.posX, self.posY), self.size)
+
+    def shoot(self, velocity):
+        while 0 < self.posX < self.width:
+            if self.rock:
+                self.posX += velocity
+                self.screen.blit(self.img, (self.posX, self.posY))
+                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            else:
+                break
 
 
 class PowerUp(pygame.sprite.Sprite):
@@ -103,8 +127,9 @@ class PowerUp(pygame.sprite.Sprite):
 
     def display(self, character_obj, level):
         """I'm sure that the coin needs to be seen and located before it is obtained"""
-        if self.picked == False:
+        if not self.picked:
             self.screen.blit(self.img, (self.posX, self.posY))
+            self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
         if pygame.sprite.collide_rect(self, character_obj) and (not self.picked):
             self.picked = True
@@ -119,8 +144,9 @@ class PowerUp(pygame.sprite.Sprite):
         if not pygame.sprite.collide_rect(self, level):
             if not pygame.sprite.collide_mask(self, level):
                 self.posY += 2
-                self.screen.blit(self.img, (self.posX, self.posY))
-                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        elif pygame.sprite.collide_rect(self, level):
+            if pygame.sprite.collide_mask(self, level):
+                self.posY -= 2
 
     def scroll(self, direction):
         """If the player has triggerred a scroll, we want the powerup to move offscreen."""
@@ -156,15 +182,77 @@ class Level(pygame.sprite.Sprite):
         self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
     def scroll(self, direction):
-        """If the player is far enough to either side, we want to move the ground so the player can see the new ground"""
+        """If the player is far enough to either side
+           we want to move the ground so the player can see the new ground"""
         if direction == 'right':
             self.posX -= self.screen_width
         elif direction == 'left':
             self.posX += self.screen_width
 
 
-class Character(pygame.sprite.Sprite):
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, screen, level_instance, screen_width, screen_height, image_path, posx, posy, speed=15):
+        """
+        :param screen: Instance of the screen to blit onto 
+        :param level_instance: Instance of the level to detect collisions
+        :param screen_width: Width of screen
+        :param screen_height: Height of screen
+        :param image_path: Path to image of projectile
+        :param speed: How fast the projectile should go in pixels/millisecond. 
+        """
 
+        self.screen = screen
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.image = pygame.image.load(image_path)
+        self.size = self.image.get_size()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.height = self.size[1]
+        self.width = self.size[0]
+        self.posX = posx
+        self.posY = posy - (self.height * 2)
+        self.initial_time = pygame.time.get_ticks()
+        self.crashed = False
+        self.speed = speed
+        self.level = level_instance
+
+    @staticmethod
+    def __get_vertical_speed(millis):
+        """
+        :param millis: Milliseconds since we started flying 
+        :return: The vertical speed in pixels/millisecond
+        """
+        return G * millis / 1000
+
+    def fly(self):
+        dt = pygame.time.get_ticks() - self.initial_time
+        dy = self.__get_vertical_speed(dt)
+        self.posY += dy
+        if self.speed > 0:
+            self.posX += self.speed
+        elif self.speed < 0:
+            self.posX -= self.speed
+
+        self.__blit()
+
+    def __blit(self):
+        self.rect = pygame.Rect((self.posX, self.posY), self.size)
+        if not self.crashed:
+            self.screen.blit(self.image, (self.posX, self.posY))
+        if pygame.sprite.collide_rect(self, self.level):
+            if pygame.sprite.collide_mask(self, self.level):
+                self.crashed = True
+
+    def __str__(self):
+        print("PosX: " + str(self.posX))
+        print("PosY: " + str(self.posY))
+        print("Speed: " + str(self.speed))
+        print("Size: ", self.size)
+        print("Crashed: " + str(self.crashed))
+        return ""
+
+
+class Character(pygame.sprite.Sprite):
     def __init__(self, screen, screen_width, screen_height):
         """
         Makes a character dude
@@ -186,7 +274,7 @@ class Character(pygame.sprite.Sprite):
         # self.right_mask = pygame.mask.from_surface(self.right_img)
         # self.left_mask = pygame.mask.from_surface(self.left_img)
         self.health = 3
-        self.rocks = 0
+        self.rocks = 10
         self.size = self.forward_size
         self.image = self.forward_img
         # self.mask = self.forward_mask
@@ -197,60 +285,80 @@ class Character(pygame.sprite.Sprite):
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.error_sound = pygame.mixer.Sound("resources/error.mp3")
+        self.direction = None
 
         self.rect = pygame.Rect((self.posX, self.posY), self.size)
         self.deaths = 0
         self.speed = 50
 
-    def move(self, ground_rect, direction='forward', coin_obj=[], powerup_obj=[]):
+    def __horizontalMoveLeft(self):
+        """
+        Move the character left. Does not blit or update rectangle.
+        """
+        self.size = self.left_size
+        self.image = self.left_img
+        self.posX -= 4
+
+    def __horizontalMoveRight(self):
+        """
+        Move the character right. Does not blit or update rectangle.
+        """
+        self.size = self.right_size
+        self.image = self.right_img
+        # self.mask = self.right_mask
+        self.posX += 4
+
+    def __jump(self):
+        """Jump. Does not blit or update rectangle."""
+        for x in list(reversed(range(self.size[0]))):
+            self.posY -= x / 4
+
+    def __display(self):
+        """Blit and update the rectangle."""
+        self.screen.blit(self.image, (self.posX, self.posY))
+        self.rect = pygame.Rect((self.posX, self.posY), self.size)
+
+    def move(self, ground_rect, direction='forward', coin_obj=[], powerup_obj=[], rock_obj=[]):
         """
         Move the gingerman
         :param ground_rect: The rectangle representing the ground
         :param direction: The direction to move. Can be 'left', 'right', or 'up'
-        :param coin_obj: A list of coin objects. We need this list so we can shove them to the side of the screen when we move too far.
+        :param coin_obj: A list of coin objects. We need this list so we can shove them to the side of the screen when 
+        we move too far.
+        :param rock_obj: A list of rock object so that we can scroll them.
         :param powerup_obj: A list of powerup objects. We need this for the same reason as the coin objects.
         """
+
+        self.direction = direction
+
         if not pygame.sprite.collide_rect(self, ground_rect):
             if not pygame.sprite.collide_mask(self, ground_rect):
                 self.posY += 2
                 # self.mask = self.forward_mask
                 self.screen.blit(self.image, (self.posX, self.posY))
                 self.rect = pygame.Rect((self.posX, self.posY), self.size)
+
         if direction == 'left':
-            self.size = self.left_size
-            self.image = self.left_img
-            # self.mask = self.left_mask
-            self.posX -= 4
-            self.screen.blit(self.image, (self.posX, self.posY))
-            self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            self.__horizontalMoveLeft()
+
         if direction == 'right':
-            self.size = self.right_size
-            self.image = self.right_img
-            # self.mask = self.right_mask
-            self.posX += 4
-            self.screen.blit(self.image, (self.posX, self.posY))
-            self.rect = pygame.Rect((self.posX, self.posY), self.size)
+            self.__horizontalMoveRight()
 
         if direction == 'up' and pygame.sprite.collide_mask(self, ground_rect):
-            # self.size = self.forward_size
-            # self.image = self.forward_img
-            # self.mask = self.forward_mask
-            self.screen.blit(self.image, (self.posX, self.posY))
-            self.rect = pygame.Rect((self.posX, self.posY), self.size)
-            for x in list(reversed(range(self.size[0]))):
-                self.posY -= x / 4
+            self.__jump()
 
+        # If we touched the ground:
         if pygame.sprite.collide_rect(self, ground_rect):
             if pygame.sprite.collide_mask(self, ground_rect):
                 self.screen.blit(self.image, (self.posX, self.posY))
+                self.rect = pygame.Rect((self.posX, self.posY), self.size)
+                self.posY -= 1
             else:
                 self.posY += 1
                 self.size = self.forward_size
                 self.image = self.forward_img
-                # self.mask = self.forward_mask
-                self.screen.blit(self.image, (self.posX, self.posY))
-                self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
+        # If we fell off the map
         if self.posY > self.screen_height:
             if self.posX < self.screen_width / 2:
                 self.posX = self.screen_width - 102
@@ -260,61 +368,62 @@ class Character(pygame.sprite.Sprite):
                 self.posY = self.screen_height / 2
             self.deaths -= 1
 
+        # Scroll everything over when appropriate
         if self.posX >= self.screen_width:
             self.posX = 3
             ground_rect.scroll('right')
-            for obj in coin_obj:
-                obj.scroll('right')
-            for obj in powerup_obj:
+            for obj in coin_obj + powerup_obj + rock_obj:
                 obj.scroll('right')
 
-            self.screen.blit(self.image, (self.posX, self.posY))
-            self.rect = pygame.Rect((self.posX, self.posY), self.size)
         elif self.posX <= 0:
             self.posX = self.screen_width - 3
             ground_rect.scroll('left')
-            for obj in coin_obj:
+            for obj in coin_obj + powerup_obj + rock_obj:
                 obj.scroll('left')
-            for obj in powerup_obj:
-                obj.scroll('left')
-            self.screen.blit(self.image, (self.posX, self.posY))
-            self.rect = pygame.Rect((self.posX, self.posY), self.size)
 
-        def shoot(self, rock):
-            if self.rocks > 0:
-                rock.shoot()
+        self.__display()
+
+    def shoot(self, ground_rect, direction):
+        speed = 50
+        if self.rocks > 0:
+            self.rocks -= 1
+            if direction == 'left':
+                return Projectile(self.screen, self.screen_width, self.screen_height, 'resources/stone.png', self.posX,
+                                  self.posY, -speed)
             else:
-                self.error_sound.play()
+                return Projectile(self.screen, ground_rect, self.screen_width, self.screen_height,
+                                  'resources/stone.png', self.posX, self.posY, speed)
+        else:
+            self.error_sound.play()
+            return None
 
 
 class Cloud:
-
     def __init__(self):
         """
         Create an instance of a cloud to go high in the sky
         """
-        global height, width, screen
+        global global_height, global_width, global_screen
         self.img = pygame.image.load("resources/8bit_cloud.png")
         self.size = self.img.get_size()
-        self.screen = screen
-        self.altitude = random.randint(0, (height / 3) / self.size[1]) * self.size[1]
-        self.position = random.randint(0, width)
+        self.screen = global_screen
+        self.altitude = random.randint(0, (global_height / 3) / self.size[1]) * self.size[1]
+        self.position = random.randint(0, global_width)
 
     def move(self):
         """
         Move the cloud
         """
-        global height, width, screen
+        global global_height, global_width, global_screen
         self.position += 0.5
         self.screen.blit(self.img, (self.position, self.altitude))
 
-        if self.position == width + self.size[0]:
-            self.altitude = random.randint(0, (height / 2) / self.size[1]) * self.size[1]
+        if self.position == global_width + self.size[0]:
+            self.altitude = random.randint(0, (global_height / 2) / self.size[1]) * self.size[1]
             self.position = 0 - self.size[0]
 
 
 class StartMenuItem(pygame.sprite.Sprite):
-
     def __init__(self, img_path, posY, centered=True, posX=None):
         """
         Make a start menu item ex settings button
@@ -323,17 +432,17 @@ class StartMenuItem(pygame.sprite.Sprite):
         :param centered: Should the menu item be centered? Defaults to True.
         :param posX: X position of the menu item if you don't want it centered. Defaults to None. 
         """
-        global height, width, screen
+        global global_height, global_width, global_screen
         super(StartMenuItem).__init__(StartMenuItem)
         self.img = pygame.image.load(str(img_path))
 
         self.size = self.img.get_size()
-        self.screen = screen
+        self.screen = global_screen
         self.altitude = int(posY)
         if centered and posX is not None:
             raise ValueError("Start menu item is supposed to be centered and the posX parameter is given!")
         elif centered:
-            self.posX = (width / 2) - (self.size[0] / 2)
+            self.posX = (global_width / 2) - (self.size[0] / 2)
         else:
             self.posX = posX
 
@@ -343,11 +452,8 @@ class StartMenuItem(pygame.sprite.Sprite):
         """Display the button"""
         self.screen.blit(self.img, (self.posX, self.altitude))
 
-    def clicked(self, thing_to_do, *args, **kwargs):
+    def clicked(self):
         """
-        :param thing_to_do: A function 
-        :param args: Args for the function
-        :param kwargs:  Keyword args for the function
+        :return If I am being clicked
         """
-        global running, width, height
-        thing_to_do(*args, **kwargs)
+        return pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos())

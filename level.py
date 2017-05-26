@@ -1,16 +1,7 @@
+from classes import *
+
+
 def main(width, height):
-    # import modules
-    import pygame
-    import os
-    import random
-    import time
-
-    from classes import PowerUp
-    from classes import Level
-    from classes import Character
-    from classes import Cloud
-    from classes import Obtainium
-
     # Death counter
     deaths = 0
     clock = pygame.time.Clock()
@@ -35,17 +26,24 @@ def main(width, height):
     clouds = [Cloud(), Cloud(), Cloud()]
     coins = []
     powerups = []
-    rocks = Obtainium(screen, width, height, 'resources/stone.png', width / 2, 50, True)
+    rocks = [
+        ItemOnGround(screen, width, height, 'resources/stone.png', random.randint(-2 * width, 2 * width), height - 150,
+                     True)
+        for _ in range(10)]
+    bullets = []
     for x in range(7):
         coins.append(
-            Obtainium(screen, width, height, random.choice(coin_imgs), (random.randint(-400, 4000)) - (10 * x) + width,
-                      height - 150))
+            ItemOnGround(screen, width, height, random.choice(coin_imgs),
+                         (random.randint(-4000, 4000)) - (10 * x) + width,
+                         height - 150))
         powerups.append(
-            PowerUp(screen, width, height, 'resources/arrow.png', (random.randint(-400, 4000)) - (10 * x) + width,
+            PowerUp(screen, width, height, 'resources/arrow.png', (random.randint(-4000, 4000)) - (10 * x) + width,
                     height - 150))
 
     # If the arrow keys are held down, we want the character to continously move. This helps with that.
     pygame.key.set_repeat(100, gingerman.speed)
+
+    might_be_bullet = None
 
     # Gameloop, executes all the actions
     while running:
@@ -59,6 +57,7 @@ def main(width, height):
             # Exits program if red X cliked
             if event.type == pygame.QUIT:
                 running = 0
+                # sys.exit()
 
             # Moves the character if the keys are pressed
             if event.type == pygame.KEYDOWN:
@@ -68,6 +67,14 @@ def main(width, height):
                     gingerman.move(level, 'right', coins, powerups)
                 if event.key == pygame.K_SPACE:
                     gingerman.move(level, 'up', coins, powerups)
+                if event.key == pygame.K_q:
+                    print("shoot(self, velocity)")
+                    might_be_bullet = gingerman.shoot(level, -1)
+                if event.key == pygame.K_w:
+                    might_be_bullet = gingerman.shoot(level, 1)
+            if might_be_bullet is not None:
+                bullets.append(might_be_bullet)
+                might_be_bullet = None
 
         # makes the background blue
         screen.fill((135, 206, 235))
@@ -82,7 +89,13 @@ def main(width, height):
 
         deathtext = font.render("Score:" + str(gingerman.deaths), 1, (255, 255, 255))
         rocktext = font.render("Rocks:" + str(gingerman.rocks), 1, (255, 255, 255))
-        rocks.display(gingerman, level)
+
+        for rock in rocks:
+            rock.display(gingerman, level)
+
+        for bullet in bullets:
+            bullet.fly()
+            print(bullet)
 
         # Makes sure physics applies
         gingerman.move(level, 'forward', coins)
@@ -96,7 +109,7 @@ def main(width, height):
         # Shows everything
         pygame.display.flip()
 
-        clock.tick(120)
+        clock.tick(60)
 
 
 if __name__ == '__main__':
