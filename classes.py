@@ -210,7 +210,7 @@ class Projectile(pygame.sprite.Sprite):
         self.height = self.size[1]
         self.width = self.size[0]
         self.posX = posx
-        self.posY = posy - (self.height * 2)
+        self.posY = posy
         self.initial_time = pygame.time.get_ticks()
         self.crashed = False
         self.speed = speed
@@ -459,7 +459,7 @@ class Character(pygame.sprite.Sprite):
         self.__display()
 
     def shoot(self, ground_rect, direction):
-        speed = 25
+        speed = 50
         if self.rocks > 0:
             self.rocks -= 1
             if direction == 'left':
