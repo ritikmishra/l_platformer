@@ -331,18 +331,17 @@ class Character(pygame.sprite.Sprite):
 
     def __vertical_movement(self, ground_rect):
         if not self.surrounded_by['bottom'] or self.initvel != 0:
-            initvel = self.initvel
             if self.landed:
                 self.initial_time = pygame.time.get_ticks()
                 self.landed = False
 
             dt = pygame.time.get_ticks() - self.initial_time
-            dy = self.__get_vertical_speed(initvel, dt)
+            dy = self.__get_vertical_speed(self.initvel, dt)
             self.posY += dy
 
             print("dt: " + str(dt))
             print("dy: " + str(dy))
-            print("Initial Velocity: " + str(initvel))
+            print("Initial Velocity: " + str(self.initvel))
             print("Jumping: " + str(self.jumping))
             print("Landed: " + str(self.landed))
             print("\n")
@@ -415,16 +414,6 @@ class Character(pygame.sprite.Sprite):
             if self.landed and self.overlap >= 22:
                 self.initvel = 0
 
-        if direction == 'left':
-            self.__horizontalMoveLeft()
-
-        if direction == 'right':
-            self.__horizontalMoveRight()
-
-        if direction == 'up' and pygame.sprite.collide_mask(self, ground_rect):
-            self.initvel = 25
-            # move up
-
         # If we fell off the map
         if self.posY > self.screen_height:
             if self.posX < self.screen_width / 2:
@@ -450,10 +439,20 @@ class Character(pygame.sprite.Sprite):
 
         if self.surrounded_by['bottom'] or self.surrounded_by['all']:
             while self.overlap is not 0:
-                self.posY -= 2  # go up
+                self.posY -= 1  # go up
                 self.overlap = ground_rect.mask.overlap_area(mask, (int(-ground_rect.posX + self.posX), int(-ground_rect.posY + self.posY)))
 
         print(self.surrounded_by)
+
+        if direction == 'left':
+            self.__horizontalMoveLeft()
+
+        if direction == 'right':
+            self.__horizontalMoveRight()
+
+        if direction == 'up':
+            self.initvel = 25
+            # move up
 
         self.__vertical_movement(ground_rect)
 
