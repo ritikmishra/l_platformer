@@ -299,6 +299,11 @@ class Character(pygame.sprite.Sprite):
         self.dy = 0
         self.initvel = 0
 
+        self.surrounded_by = None
+        self.overlap = None
+        self.vertical_overlap = None
+        self.lateral_overlap = None
+
     @staticmethod
     def __get_vertical_speed(vinit, millis):
         """
@@ -325,29 +330,28 @@ class Character(pygame.sprite.Sprite):
         self.posX += 4
 
     def __vertical_movement(self, ground_rect):
-        initvel = self.initvel
-        """Jump. Does not blit or update rectangle."""
-        if self.landed:
-            self.initial_time = pygame.time.get_ticks()
-            self.landed = False
+        if not self.surrounded_by['bottom'] or self.initvel != 0:
+            initvel = self.initvel
+            if self.landed:
+                self.initial_time = pygame.time.get_ticks()
+                self.landed = False
 
-        dt = pygame.time.get_ticks() - self.initial_time
-        dy = self.__get_vertical_speed(initvel, dt)
-        self.posY += dy
+            dt = pygame.time.get_ticks() - self.initial_time
+            dy = self.__get_vertical_speed(initvel, dt)
+            self.posY += dy
 
-        print("dt: " + str(dt))
-        print("dy: " + str(dy))
-        print("Initial Velocity: " + str(initvel))
-        print("Jumping: " + str(self.jumping))
-        print("Landed: " + str(self.landed))
-        print("\n")
+            print("dt: " + str(dt))
+            print("dy: " + str(dy))
+            print("Initial Velocity: " + str(initvel))
+            print("Jumping: " + str(self.jumping))
+            print("Landed: " + str(self.landed))
+            print("\n")
 
-        if pygame.sprite.collide_rect(self, ground_rect):
-            if pygame.sprite.collide_mask(self, ground_rect):
-                self.jumping = False
-                self.landed = True
-                self.initial_time = None
-
+            if pygame.sprite.collide_rect(self, ground_rect):
+                if pygame.sprite.collide_mask(self, ground_rect):
+                    # self.jumping = False
+                    self.landed = True
+                    self.initial_time = None
 
     def __display(self):
         """Blit and update the rectangle."""
@@ -366,18 +370,50 @@ class Character(pygame.sprite.Sprite):
         """
 
         self.direction = direction
+        self.surrounded_by = {'left': False, 'right': False, 'top': False, 'bottom': False, 'all': False}
 
         mask = pygame.mask.from_surface(self.image)
-        overlap = mask.overlap_area(ground_rect.mask, (-int(self.posX) + ground_rect.posX, -int(self.posY) + ground_rect.posY))
-        print("Overlap: " + str(overlap))  # place mask at regular origin
+        self.overlap = ground_rect.mask.overlap_area(mask, (int(-ground_rect.posX + self.posX), int(-ground_rect.posY + self.posY)))
+
+        total = 0
+
+        # Overlap is shifted right by one pixel
+        self.lateral_overlap = ground_rect.mask.overlap_area(mask, (int(-ground_rect.posX + self.posX + 1), int(-ground_rect.posY + self.posY)))
+
+        # Overlap is shifted down by one pixel
+        self.vertical_overlap = ground_rect.mask.overlap_area(mask, (int(-ground_rect.posX + self.posX), int(-ground_rect.posY + self.posY + 1)))
+
+        if self.lateral_overlap < self.overlap:
+            # If we move the gingerman right and there is less overlap, he is surrounded on his left
+            self.surrounded_by['left'] = True
+
+        elif self.lateral_overlap > self.overlap:
+            # If we move the gingerman right and there is more overlap, he is surrounded on his right
+            self.surrounded_by['right'] = True
+
+        else:
+            total += 1
+
+        if self.vertical_overlap < self.overlap:
+            # If we move the gingerman down and there is less overlap, he is surrounded on his top
+            self.surrounded_by['top'] = True
+
+        elif self.vertical_overlap > self.overlap:
+            # If we move the gingerman down and there is more overlap, he is surrounded on his bottom
+            self.surrounded_by['bottom'] = True
+
+        else:
+            total += 1
+
+        if self.overlap >= 274 and total == 2:
+            self.surrounded_by['all'] = True
+
+        print("Overlap: " + str(self.overlap))  # place mask at regular origin
 
         if pygame.sprite.collide_mask(self, ground_rect):
             self.landed = True
-            self.posY -= 0.5
-            if self.landed and overlap >= 22:
+            if self.landed and self.overlap >= 22:
                 self.initvel = 0
-
-        self.__vertical_movement(ground_rect)
 
         if direction == 'left':
             self.__horizontalMoveLeft()
@@ -411,6 +447,15 @@ class Character(pygame.sprite.Sprite):
             ground_rect.scroll('left')
             for obj in coin_obj + powerup_obj + rock_obj:
                 obj.scroll('left')
+
+        if self.surrounded_by['bottom'] or self.surrounded_by['all']:
+            while self.overlap is not 0:
+                self.posY -= 2  # go up
+                self.overlap = ground_rect.mask.overlap_area(mask, (int(-ground_rect.posX + self.posX), int(-ground_rect.posY + self.posY)))
+
+        print(self.surrounded_by)
+
+        self.__vertical_movement(ground_rect)
 
         self.__display()
 
